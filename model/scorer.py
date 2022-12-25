@@ -11,7 +11,9 @@ class Scorer(nn.Module):
         self.model = model
         self.max_length = max_length
         self.device = device
-
+        self.dropout = nn.Dropout(0.1)
+        self.cls = nn.Linear(768*4, 2)
+        
     def prepare_input(self, query, passage):
         inputs = self.tokenizer.encode_plus(text=query,
                                             text_pair=passage,
@@ -33,6 +35,10 @@ class Scorer(nn.Module):
             inputs[0]) == len(inputs[2])
         x = self.model(inputs[0], attention_mask=inputs[1],
                        token_type_ids=inputs[2], labels=labels)
+        hidden_stats = x.hidden_states[-4:]
+        hidden_stats = [i.mean(dim=1) for i in hidden_stats]
+        x = torch.cat(hidden_stats,dim=1)
+        x = self.cls(self.dropout(x))
         return x
 
     def predict(self, inputs, batch_size):
@@ -42,7 +48,7 @@ class Scorer(nn.Module):
                 input = inputs[i*batch_size:(i+1)*batch_size]
                 input = torch.as_tensor(input).to(self.device)
                 output = self(input)
-                score = F.softmax(output.logits, dim=1)
+                score = F.softmax(output, dim=1)
                 scores.append(score.cpu())
         return torch.vstack(scores)
 
