@@ -232,8 +232,8 @@ def main(args, model_name, max_length, batch_size, num_samples, epochs, learning
                                       val_acc.compute(),
                                       val_confusion_matrix.compute()
                                       )
-        log.append_num1('val_loss', val_loss.compute())
-        log.append_num1('val_acc', val_acc.compute())
+        log.append_num1('val_loss', val_loss.compute().cpu().numpy())
+        log.append_num1('val_acc', val_acc.compute().cpu().numpy())
         val_loss.reset()
         val_acc.reset()
         val_confusion_matrix.reset()
