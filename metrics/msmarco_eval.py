@@ -7,7 +7,7 @@ def load_reference(path_to_reference):
     with open(path_to_reference, 'r') as f:
         for l in f:
             try:
-                l = l.strip('\n').split('\t')
+                l = l.strip('\n').split(' ')
                 qid = int(l[0])
                 pid = int(l[2])
                 if qid not in qids_to_passages_rels:
