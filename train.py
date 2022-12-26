@@ -113,10 +113,13 @@ def one_step(model, inputs, gold, loss, acc, confusion_matrix):
     gold = gold.to(args.device)
     inputs = inputs.to(args.device)
     outputs = model(inputs, gold[:, -1])
-    t_loss = outputs[0]
-    predictions = F.softmax(outputs[1].cpu(), dim=1)[:, -1]
-    gold = gold.cpu()[:, -1]
+    predictions = F.softmax(outputs.cpu(), dim=1)
+    gold=gold.float()
+    t_loss = F.cross_entropy(predictions, gold)
     loss(t_loss.item())
+    
+    predictions=predictions.cpu()[:,-1]
+    gold = gold.cpu()[:, -1]
     acc(predictions, gold)
     confusion_matrix(predictions, gold)
     return t_loss
@@ -161,6 +164,8 @@ def main(args, model_name, max_length, batch_size, num_samples, epochs, learning
     '''
     Define metrics
     '''
+#     train_acc = torchmetrics.Accuracy(task="binary", threshold= 0.5)
+#     train_confusion_matrix = torchmetrics.ConfusionMatrix(task="binary", num_classes=2)
     train_loss = torchmetrics.MeanMetric()
     val_loss = torchmetrics.MeanMetric()
     train_acc = torchmetrics.Accuracy("binary")
