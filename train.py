@@ -113,13 +113,13 @@ def one_step(model, inputs, gold, loss, acc, confusion_matrix):
     gold = gold.to(args.device)
     inputs = inputs.to(args.device)
     outputs = model(inputs, gold[:, -1])
-    predictions = F.softmax(outputs.cpu(), dim=1)
+    predictions = F.softmax(outputs, dim=1)
     gold=gold.float()
     t_loss = F.cross_entropy(predictions, gold)
     loss(t_loss.item())
     
-    predictions=predictions.cpu()[:,-1]
-    gold = gold.cpu()[:, -1]
+    predictions=predictions[:,-1]
+    gold = gold[:, -1]
     acc(predictions, gold)
     confusion_matrix(predictions, gold)
     return t_loss
@@ -131,7 +131,7 @@ def main(args, model_name, max_length, batch_size, num_samples, epochs, learning
     '''
     log = Log(save_path)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    config = BertConfig.from_pretrained(model_name)
+    config = BertConfig.from_pretrained(model_name, output_hidden_states = True)
     bert = BertForSequenceClassification.from_pretrained(
         model_name, config=config)
     model = Scorer(tokenizer, bert, max_length,  args.device)
@@ -166,12 +166,12 @@ def main(args, model_name, max_length, batch_size, num_samples, epochs, learning
     '''
 #     train_acc = torchmetrics.Accuracy(task="binary", threshold= 0.5)
 #     train_confusion_matrix = torchmetrics.ConfusionMatrix(task="binary", num_classes=2)
-    train_loss = torchmetrics.MeanMetric()
-    val_loss = torchmetrics.MeanMetric()
-    train_acc = torchmetrics.Accuracy("binary")
-    val_acc = torchmetrics.Accuracy("binary")
-    train_confusion_matrix = torchmetrics.ConfusionMatrix("binary")
-    val_confusion_matrix = torchmetrics.ConfusionMatrix("binary")
+    train_loss = torchmetrics.MeanMetric().to(args.device)
+    val_loss = torchmetrics.MeanMetric().to(args.device)
+    train_acc = torchmetrics.Accuracy("binary").to(args.device)
+    val_acc = torchmetrics.Accuracy("binary").to(args.device)
+    train_confusion_matrix = torchmetrics.ConfusionMatrix("binary").to(args.device)
+    val_confusion_matrix = torchmetrics.ConfusionMatrix("binary").to(args.device)
 
     mrr = EvaluationQueries(args.model_name, args.val_qp_path, args.batch_size)
 
@@ -210,8 +210,8 @@ def main(args, model_name, max_length, batch_size, num_samples, epochs, learning
             Validation loop every XXXX steps
             '''
             if training_step % 100 == 0:
-                log.append_num1('train_loss', train_loss.compute().numpy())
-                log.append_num1('train_acc', train_acc.compute().numpy())
+                log.append_num1('train_loss', train_loss.compute().cpu().numpy())
+                log.append_num1('train_acc', train_acc.compute().cpu().numpy())
                 s = template_train_step.format(training_step,
                                                train_loss.compute(),
                                                train_acc.compute(),
