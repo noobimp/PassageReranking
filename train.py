@@ -74,7 +74,7 @@ def get_val_dataset(val_dataset_path, val_qrels_path, tokenizer, max_length, bat
     qidpid2rel = {}
     with open(val_qrels_path, 'r') as f:
         for line in tqdm(f, desc='Reading qrels file'):
-            line = line.strip('\n').split('\t')
+            line = line.strip('\n').split(' ')
             assert len(line) == 4
             if line[0] not in qidpid2rel:
                 qidpid2rel[line[0]] = {}
