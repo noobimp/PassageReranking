@@ -11,8 +11,8 @@ class Scorer(nn.Module):
         self.model = model
         self.max_length = max_length
         self.device = device
-        self.dropout = nn.Dropout(0.1)
-        self.cls = nn.Linear(768*4, 2)
+        #self.dropout = nn.Dropout(0.1)
+        self.cls = nn.Linear(768, 2)
         
     def prepare_input(self, query, passage):
         inputs = self.tokenizer.encode_plus(text=query,
@@ -35,10 +35,10 @@ class Scorer(nn.Module):
             inputs[0]) == len(inputs[2])
         x = self.model(inputs[0], attention_mask=inputs[1],
                        token_type_ids=inputs[2], labels=labels)
-        hidden_stats = x.hidden_states[-4:]
+        hidden_stats = x.hidden_states[-1:]
         hidden_stats = [i.mean(dim=1) for i in hidden_stats]
         x = torch.cat(hidden_stats,dim=1)
-        x = self.cls(self.dropout(x))
+        x = self.cls(x)
         return x
 
     def predict(self, inputs, batch_size):
